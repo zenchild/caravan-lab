@@ -36,8 +36,6 @@ if config_env() == :prod do
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
 
-  config :caravan_lab, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
-
   config :caravan_lab, CaravanLabWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
@@ -82,3 +80,20 @@ if config_env() == :prod do
   #
   # Check `Plug.SSL` for all available options in `force_ssl`.
 end
+
+config :libcluster,
+  topologies: [
+    caravan: [
+      # The selected clustering strategy. Required.
+      strategy: Caravan.Cluster.DnsStrategy,
+      config: [
+        # service name that returns the distribution port in a SRV record
+        query: "caravan-lab.service.devl.consul",
+        node_sname: "node",
+        # The poll interval for the Consul service in milliseconds. Defaults to 5s
+        poll_interval: 15_000,
+        # The module of the DNS client to use.
+        dns_client: Caravan.DnsClient.InetRes
+      ]
+    ]
+  ]

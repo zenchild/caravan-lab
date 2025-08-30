@@ -1,0 +1,5 @@
+%% -- ERLANG INET CONFIGURATION FILE --
+%% For more info see: https://www.erlang.org/doc/apps/erts/inet_cfg.html
+%% {nameserver, {127,0,0,0}, 9053}.
+%% {nameserver, {192,168,65,254}, 9053}.
+{nameserver, {172,200,0,53}, 8600}.

@@ -1,0 +1,131 @@
+name: caravan_cluster
+
+services:
+  node_a:
+    container_name: node_a
+    hostname: node_a
+    build: .
+    environment:
+      SECRET_KEY_BASE: XxCXBx3xBUuWCNIzmFMavQntSSYt1QQGyAWMpZ3hqB/Bx4YKk+gRtVqhtZWlVinX
+      ERL_DIST_PORT: 8002
+      ELIXIR_ERL_OPTIONS: "-start_epmd false -epmd_module Elixir.Caravan.Epmd.Client"
+      RELEASE_DISTRIBUTION: name
+      RELEASE_NODE: "node_a@caravan-lab.service.devl.consul"
+      ERL_INETRC: /data/erl_inetrc
+    labels:
+      - consul.enabled=true
+      - consul.service.caravan-lab.port=8002
+      - consul.service.caravan-lab.tags=node_a
+      - consul.service.caravan-lab.address=node_a.caravan-lab.service.devl.consul
+    volumes:
+      - type: bind
+        source: ./docker/volumes/app
+        target: /data
+    networks:
+      - caravan_network
+    depends_on:
+      - consul
+      - docker-consul-agent
+
+  node_b:
+    container_name: node_b
+    hostname: node_b
+    build: .
+    environment:
+      SECRET_KEY_BASE: XxCXBx3xBUuWCNIzmFMavQntSSYt1QQGyAWMpZ3hqB/Bx4YKk+gRtVqhtZWlVinX
+      ERL_DIST_PORT: 8003
+      ELIXIR_ERL_OPTIONS: "-start_epmd false -epmd_module Elixir.Caravan.Epmd.Client"
+      RELEASE_DISTRIBUTION: name
+      RELEASE_NODE: "node_b@caravan-lab.service.devl.consul"
+      ERL_INETRC: /data/erl_inetrc
+    labels:
+      - consul.enabled=true
+      - consul.service.caravan-lab.port=8003
+      - consul.service.caravan-lab.tags=node_b
+      - consul.service.caravan-lab.address=node_b.caravan-lab.service.devl.consul
+    volumes:
+      - type: bind
+        source: ./docker/volumes/app
+        target: /data
+    networks:
+      - caravan_network
+    depends_on:
+      - consul
+      - docker-consul-agent
+
+  node_c:
+    container_name: node_c
+    hostname: node_c
+    build: .
+    environment:
+      SECRET_KEY_BASE: XxCXBx3xBUuWCNIzmFMavQntSSYt1QQGyAWMpZ3hqB/Bx4YKk+gRtVqhtZWlVinX
+      ERL_DIST_PORT: 8004
+      ELIXIR_ERL_OPTIONS: "-start_epmd false -epmd_module Elixir.Caravan.Epmd.Client"
+      RELEASE_DISTRIBUTION: name
+      RELEASE_NODE: "node_c@caravan-lab.service.devl.consul"
+      ERL_INETRC: /data/erl_inetrc
+    labels:
+      - consul.enabled=true
+      - consul.service.caravan-lab.port=8004
+      - consul.service.caravan-lab.tags=node_c
+      - consul.service.caravan-lab.address=node_c.caravan-lab.service.devl.consul
+    volumes:
+      - type: bind
+        source: ./docker/volumes/app
+        target: /data
+    networks:
+      - caravan_network
+    depends_on:
+      - consul
+      - docker-consul-agent
+
+  consul:
+    image: hashicorp/consul:1.20
+    container_name: caravan_consul
+    hostname: consul
+    environment:
+      CONSUL_SERVER_NUMBER: 1
+      CONSUL_DATACENTER: local
+      CONSUL_DOMAIN: devl.consul
+    command:
+      - agent
+      - -dev
+      - -client=0.0.0.0
+    networks:
+      caravan_network:
+        ipv4_address: 172.200.0.53
+    ports:
+      - "127.0.0.1:8500:8500"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8500"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
+
+  docker-consul-agent:
+    image: ghcr.io/zenchild/docker-consul-agent:latest
+    container_name: caravan_docker-consul-agent
+    hostname: docker-consul-agent
+    labels:
+      - application=docker-consul-agent
+    environment:
+      CONSUL_HTTP_ADDR: caravan_consul:8500
+      CONSUL_HTTP_TOKEN: does-not-matter-but-required-by-docker-consul-agent
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - caravan_network
+    depends_on:
+      consul:
+        condition: service_healthy
+
+networks:
+  caravan_network:
+    name: global_caravan_net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.200.0.0/16
+          gateway: 172.200.0.1

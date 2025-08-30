@@ -7,9 +7,11 @@ defmodule CaravanLab.Application do
 
   @impl true
   def start(_type, _args) do
+    topologies = Application.get_env(:libcluster, :topologies)
+
     children = [
       CaravanLabWeb.Telemetry,
-      {DNSCluster, query: Application.get_env(:caravan_lab, :dns_cluster_query) || :ignore},
+      {Cluster.Supervisor, [topologies, [name: Cluster.ClusterSupervisor]]},
       {Phoenix.PubSub, name: CaravanLab.PubSub},
       # Start a worker by calling: CaravanLab.Worker.start_link(arg)
       # {CaravanLab.Worker, arg},
