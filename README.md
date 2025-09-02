@@ -44,3 +44,16 @@ command to verify that the cluster is working:
 You can clean up the lab by running the following command:
 
 * `task down`
+
+
+## Running in Nomad
+
+There is an `app.nomad` jobspec that you can use to run the application in
+Nomad. You need to specify the Docker image to use when you run the job and that
+might look like this:
+
+```shell
+nomad job run \
+  -var="docker-image=<your_docker_image>" \
+  app.nomad
+```
