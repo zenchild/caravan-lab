@@ -9,6 +9,7 @@ services:
       SECRET_KEY_BASE: XxCXBx3xBUuWCNIzmFMavQntSSYt1QQGyAWMpZ3hqB/Bx4YKk+gRtVqhtZWlVinX
       ERL_DIST_PORT: 8002
       ELIXIR_ERL_OPTIONS: "-start_epmd false -epmd_module Elixir.Caravan.Epmd.Client"
+      RELEASE_COOKIE: this-must-be-the-same-to-cluster
       RELEASE_DISTRIBUTION: name
       RELEASE_NODE: "node_a@caravan-lab.service.devl.consul"
       ERL_INETRC: /data/erl_inetrc
@@ -17,6 +18,11 @@ services:
       - consul.service.caravan-lab.port=8002
       - consul.service.caravan-lab.tags=node_a
       - consul.service.caravan-lab.address=node_a.caravan-lab.service.devl.consul
+
+      - traefik.enable=true
+      - traefik.http.routers.caravan-lab-a.rule=Host(`myapp-a.valhalla.local`)
+      - traefik.http.services.caravan-lab-a.loadbalancer.server.port=4000
+      - traefik.docker.network=global_caravan_net
     volumes:
       - type: bind
         source: ./docker/volumes/app
@@ -35,6 +41,7 @@ services:
       SECRET_KEY_BASE: XxCXBx3xBUuWCNIzmFMavQntSSYt1QQGyAWMpZ3hqB/Bx4YKk+gRtVqhtZWlVinX
       ERL_DIST_PORT: 8003
       ELIXIR_ERL_OPTIONS: "-start_epmd false -epmd_module Elixir.Caravan.Epmd.Client"
+      RELEASE_COOKIE: this-must-be-the-same-to-cluster
       RELEASE_DISTRIBUTION: name
       RELEASE_NODE: "node_b@caravan-lab.service.devl.consul"
       ERL_INETRC: /data/erl_inetrc
@@ -43,6 +50,11 @@ services:
       - consul.service.caravan-lab.port=8003
       - consul.service.caravan-lab.tags=node_b
       - consul.service.caravan-lab.address=node_b.caravan-lab.service.devl.consul
+
+      - traefik.enable=true
+      - traefik.http.routers.caravan-lab-b.rule=Host(`myapp-b.valhalla.local`)
+      - traefik.http.services.caravan-lab-b.loadbalancer.server.port=4000
+      - traefik.docker.network=global_caravan_net
     volumes:
       - type: bind
         source: ./docker/volumes/app
@@ -61,6 +73,7 @@ services:
       SECRET_KEY_BASE: XxCXBx3xBUuWCNIzmFMavQntSSYt1QQGyAWMpZ3hqB/Bx4YKk+gRtVqhtZWlVinX
       ERL_DIST_PORT: 8004
       ELIXIR_ERL_OPTIONS: "-start_epmd false -epmd_module Elixir.Caravan.Epmd.Client"
+      RELEASE_COOKIE: this-must-be-the-same-to-cluster
       RELEASE_DISTRIBUTION: name
       RELEASE_NODE: "node_c@caravan-lab.service.devl.consul"
       ERL_INETRC: /data/erl_inetrc
@@ -69,6 +82,11 @@ services:
       - consul.service.caravan-lab.port=8004
       - consul.service.caravan-lab.tags=node_c
       - consul.service.caravan-lab.address=node_c.caravan-lab.service.devl.consul
+
+      - traefik.enable=true
+      - traefik.http.routers.caravan-lab-c.rule=Host(`myapp-c.valhalla.local`)
+      - traefik.http.services.caravan-lab-c.loadbalancer.server.port=4000
+      - traefik.docker.network=global_caravan_net
     volumes:
       - type: bind
         source: ./docker/volumes/app
@@ -120,6 +138,31 @@ services:
     depends_on:
       consul:
         condition: service_healthy
+
+  proxy:
+    image: traefik:v3.5
+    container_name: caravan_proxy
+    hostname: proxy
+    ports:
+      - "4080:80"
+      - "8080:8080"
+    environment:
+      # This is the Traefik Static Config. It is mutually exclusive with the CLI
+      # or config file. For dynamic configuration, use the dynamic configuration
+      # files in /traefik/dynamic.
+      TRAEFIK_API: "true"
+      TRAEFIK_API_INSECURE: "true"
+      TRAEFIK_API_DASHBOARD: "true"
+      TRAEFIK_ENTRYPOINTS_WEB: "true"
+      TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: ":80"
+      TRAEFIK_LOG: "true"
+      TRAEFIK_PROVIDERS_DOCKER: "true"
+      TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - caravan_network
 
 networks:
   caravan_network:

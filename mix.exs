@@ -42,12 +42,9 @@ defmodule CaravanLab.MixProject do
     [
       {:phoenix, "~> 1.8.1"},
       {:phoenix_html, "~> 4.1"},
-      {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 1.1.0"},
       {:lazy_html, ">= 0.1.0", only: :test},
       {:phoenix_live_dashboard, "~> 0.8.3"},
-      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
-      {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
       {:heroicons,
        github: "tailwindlabs/heroicons",
        tag: "v2.2.0",
@@ -62,6 +59,15 @@ defmodule CaravanLab.MixProject do
       {:bandit, "~> 1.5"},
       {:caravan, github: "zenchild/caravan", branch: "task/dynamic-ports-with-erl-dist-port"},
       {:libcluster, "~> 3.5"}
+    ] ++ dev_deps()
+  end
+
+  defp dev_deps do
+    [
+      {:phoenix_live_reload, "~> 1.2", only: :dev},
+      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
+      {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
+      {:tidewave, "~> 0.4.2", only: :dev}
     ]
   end
 
